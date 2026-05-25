@@ -50,7 +50,6 @@ banner_menu1() {
 }
 
 banner_menu2() {
-  print_ui() {
   PCT=$((STEP * 100 / TOTAL_STEPS))
   [ $PCT -lt 0 ] && PCT=0
   [ $PCT -gt 100 ] && PCT=100
@@ -80,29 +79,12 @@ clear
   echo -e "  ${C_BAR}[ ${C_FILL}${BAR}${RST}${C_BAR} ] ${C_TXT}${PCT}%${RST} ${C_DIM}(Bước ${STEP}/${TOTAL_STEPS})${RST}"
   echo -e "${C_HDR}╚════════════════════════════════════════════════════╝${RST}"
   echo ""
-  echo ""
-  echo -e "${CYAN}📝  HƯỚNG DẪN SỬ DỤNG${NC}"
-
-  echo -e "${WHITE}👉 Bước 1:${NC} Chọn ${GREEN}1${NC} hoặc ${YELLOW}2${NC} hoặc ${CYAN}9${NC} để tải file"
-  echo -e "${WHITE}👉 Bước 2:${NC} Chọn ${BLUE}3${NC} hoặc ${MAGENTA}4${NC} để cài đặt"
-  echo -e "${WHITE}👉 Bước 3:${NC} Chọn các chức năng khác nếu cần (mục ${CYAN}5${NC},6,${BLUE}7${NC})"
-  echo -e "${WHITE}👉 Bước 4:${NC} Chọn ${RED}8${NC} để khởi động lại TV"
-
-  echo ""
-  echo -e "${YELLOW}⚠️ Lưu ý:${NC} Làm đúng thứ tự để tránh lỗi"
   echo -e "${CYAN}=======================================${NC}"
-
-  echo -e "${GREEN}📦 1. Tải file APK Về Điện Thoại (Basic)${NC}"
-  echo -e "${YELLOW}⚡ 2. Tải file APK Về Điện Thoại PRO (Speed + UI)${NC}"
-  echo -e "${BLUE}📲 3. Cài Projectivy Launcher TV Nội Địa BẢN MỚI${NC}"
-  echo -e "${MAGENTA}🎯 4. Cài Projectivy Launcher TV Nội Địa${NC}"
+  echo -e "${BLUE}📲 3.4.9 Cài Projectivy Launcher TV Nội Địa BẢN MỚI${NC}"
   echo -e "${CYAN}🔐 5. Cấp quyền + kích hoạt Launcher${NC}"
-  echo -e "${WHITE}📥 6. Cài APK từ Download điện thoại${NC}"
   echo -e "${BLUE}📤 7. Reset Cứng - XOÁ TOÀN BỘ DỮ LIỆU TIVI${NC}"
   echo -e "${RED}🔄 8. Khởi động lại TV${NC}"
-  echo -e "${CYAN}🌐 9. CÀI TIVI V5${NC}"
   echo -e "${YELLOW}↩️  0. Quay lại MENU KẾT NỐI${NC}"
-
   echo -e "${CYAN}=======================================${NC}"
   echo -e "${C_CYAN} Báo lỗi vui lòng liên hệ:${RST} ${C_ORN}0967.341.608${RST}"
   echo ""
@@ -111,7 +93,7 @@ clear
 tick() {
   STEP=$((STEP+1))
   [ $STEP -gt $TOTAL_STEPS ] && STEP=$TOTAL_STEPS
-  print_ui
+  banner_menu2
 }
 
 pause() { read -p "⏎ Enter để tiếp..."; }
@@ -299,14 +281,11 @@ download_json() {
   sleep 8
 
   echo -e "${C_RED} 🔄 Đang khởi động lại thiết bị...${RST}"
-  timeout 3 adb reboot >/dev/null 2>&1; tick
-  adb disconnect >/dev/null 2>&1
-  sleep 2
-  adb kill-server >/dev/null 2>&1
+
 
   # Hoàn thành lấp đầy thanh trạng thái tiến trình
   STEP=$TOTAL_STEPS
-  print_ui
+  banner_menu2
 
   echo -e "\n${C_FILL}✅ CÀI ĐẶT HOÀN TẤT!${RST}"
   echo -e "------------------------------------------------------"
