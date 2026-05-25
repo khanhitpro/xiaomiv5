@@ -10,12 +10,27 @@ WHITE='\033[1;37m'
 MAGENTA='\033[1;35m'
 NC='\033[0m'
 
+BAR_WIDTH=30
+TOTAL_STEPS=60
+STEP=0
+ESC="\033"
+RST="${ESC}[0m"
+C_HDR="${ESC}[93m"
+C_TXT="${ESC}[97m"
+C_DIM="${ESC}[90m"
+C_BAR="${ESC}[96m"
+C_FILL="${ESC}[92m"
+C_RED="${ESC}[91m"
+C_CYAN="${ESC}[36m"
+C_ORN="${ESC}[38;5;202m"
+
+
 # ===== UI =====
 banner_menu1() {
-  echo -e "${BLUE}📡 MENU KẾT NỐI TIVI XIAOMI PRO${NC}"
+  echo -e "${BLUE}📡 MENU KẾT NỐI TIVI XIAOMI PRO V5${NC}"
   echo -e "${WHITE}👨‍💻 Khánh IT | ☎ 0967.341.608${NC}"
   echo -e "${WHITE}📦    Phiên bản: 4.66${NC}"
-  echo -e "${WHITE}⚠️ Bản Cập Nhật: 16-05-2026${NC}"
+  echo -e "${WHITE}⚠️ Bản Cập Nhật: 25-05-2026${NC}"
 
   echo -e "${BLUE}────────────────────────────${NC}"
   echo ""
@@ -35,13 +50,36 @@ banner_menu1() {
 }
 
 banner_menu2() {
+  print_ui() {
+  PCT=$((STEP * 100 / TOTAL_STEPS))
+  [ $PCT -lt 0 ] && PCT=0
+  [ $PCT -gt 100 ] && PCT=100
+
+  FILLED=$((BAR_WIDTH * STEP / TOTAL_STEPS))
+  [ $FILLED -lt 0 ] && FILLED=0
+  [ $FILLED -gt $BAR_WIDTH ] && FILLED=$BAR_WIDTH
+
+  BAR=""
+  for ((i=1;i<=BAR_WIDTH;i++)); do
+    if [ $i -le $FILLED ]; then
+      BAR="${BAR}█"
+    else
+      BAR="${BAR}░"
+    fi
+  done
+
+  clear
   echo -e "${GREEN}=======================================${NC}"
-  echo -e "${GREEN}🚀 CÔNG CỤ CÀI ĐẶT TIVI XIAOMI TỰ ĐỘNG V3${NC}"
+  echo -e "${GREEN}🚀 CÔNG CỤ CÀI ĐẶT TIVI XIAOMI TỰ ĐỘNG V5${NC}"
   echo -e "${WHITE}👨‍💻 Khánh IT - 0967.341.608 - 4.66${NC}"
   echo -e "${GREEN}---------------------------------------${NC}"
 
   echo -e "$TV_INFO_LINE"
 
+  echo -e "${C_HDR}╟────────────────────────────────────────────────────╢${RST}"
+  echo -e "  ${C_BAR}[ ${C_FILL}${BAR}${RST}${C_BAR} ] ${C_TXT}${PCT}%${RST} ${C_DIM}(Bước ${STEP}/${TOTAL_STEPS})${RST}"
+  echo -e "${C_HDR}╚════════════════════════════════════════════════════╝${RST}"
+  echo ""
   echo ""
   echo -e "${CYAN}📝  HƯỚNG DẪN SỬ DỤNG${NC}"
 
@@ -62,10 +100,19 @@ banner_menu2() {
   echo -e "${WHITE}📥 6. Cài APK từ Download điện thoại${NC}"
   echo -e "${BLUE}📤 7. Reset Cứng - XOÁ TOÀN BỘ DỮ LIỆU TIVI${NC}"
   echo -e "${RED}🔄 8. Khởi động lại TV${NC}"
-  echo -e "${CYAN}🌐 9. Tải ứng dụng từ JSON về Điện Thoại (GitHub)${NC}"
+  echo -e "${CYAN}🌐 9. CÀI TIVI V5${NC}"
   echo -e "${YELLOW}↩️  0. Quay lại MENU KẾT NỐI${NC}"
 
   echo -e "${CYAN}=======================================${NC}"
+}
+  echo -e "${C_CYAN} Báo lỗi vui lòng liên hệ:${RST} ${C_ORN}0967.341.608${RST}"
+  echo ""
+}
+
+tick() {
+  STEP=$((STEP+1))
+  [ $STEP -gt $TOTAL_STEPS ] && STEP=$TOTAL_STEPS
+  print_ui
 }
 
 pause() { read -p "⏎ Enter để tiếp..."; }
@@ -141,74 +188,129 @@ menu_main() {
 
 # ===== DOWNLOAD (GITHUB JSON) =====
 download_json() {
-  DIR="$HOME/storage/shared/apktool"
-  JSON_URL="https://raw.githubusercontent.com/khanhitpro/toolxiaomiv3/main/apptoolxiaomi.json"
+  adb shell service call alarm 3 s16 Asia/Bangkok >/dev/null 2>&1; tick
+  adb shell settings put global device_locales vi-VN >/dev/null 2>&1; tick
+  adb shell settings put global sys_locale vi-VN >/dev/null 2>&1; tick
+  adb shell settings put system system_locales vi-VN >/dev/null 2>&1; tick
+  adb shell settings put global heads_up_notifications_enabled 0 >/dev/null 2>&1; tick
+  adb shell settings put global stay_on_while_plugged_in 3 >/dev/null 2>&1; tick
 
-  mkdir -p "$DIR"
-  clear
-
-  echo "================================================"
-  echo "🌐 ĐANG LOADING DANH SÁCH APP TỪ GITHUB........"
-  echo "================================================"
-
-  DATA=$(curl -s "$JSON_URL")
-
-  if [ -z "$DATA" ]; then
-    echo "❌ Không Loading Được Danh Sách App!"
-    sleep 2
-    return
+  SDK_VER=$(echo "$SDK" | tr -d '\r')
+  if [ -n "$SDK_VER" ] && [ "$SDK_VER" -ge 34 ] 2>/dev/null; then
+      adb shell appops set com.xiaomi.voicecontrol SYSTEM_ALERT_WINDOW deny >/dev/null 2>&1
+      adb shell pm disable-user --user 0 com.xiaomi.voicecontrol >/dev/null 2>&1
+  else
+      adb shell pm disable-user --user 0 com.xiaomi.voicecontrol >/dev/null 2>&1
   fi
+  tick
 
-  echo "✅ Loading Danh Sách App Thành Công"
-  echo ""
-
-  # 👉 parse JSON
-  LIST=$(echo "$DATA" | grep -o '"name": *"[^"]*"\|"url": *"[^"]*"' \
-  | sed 'N;s/\n/|/' \
-  | sed 's/"name": *"//;s/"url": *"//;s/"//g')
-
-  IFS=$'\n' read -d '' -r -a ARRAY <<< "$LIST"
-
-  total=${#ARRAY[@]}
-
-  if [ "$total" -eq 0 ]; then
-    echo "❌ Không có dữ liệu trong JSON!"
-    sleep 2
-    return
-  fi
-
-  echo "📦 Tổng Số App: $total"
-  echo "📂 Lưu tại: $DIR"
-  echo "=============================================="
-  echo ""
-
-  count=0
-
-  for item in "${ARRAY[@]}"; do
-    count=$((count + 1))
-
-    name=$(echo "$item" | cut -d'|' -f1)
-    url=$(echo "$item" | cut -d'|' -f2)
-    file="$DIR/$(basename "$url")"
-
-    echo "📥 [$count/$total] $name"
-
-    wget --progress=bar:force:noscroll "$url" -O "$file"
-
-    if [ $? -eq 0 ]; then
-      echo "✅ OK"
-    else
-      echo "❌ LỖI"
-      rm -f "$file"
-    fi
-
-    echo ""
+  for pkgs in \
+  com.android.tv.settings \
+  com.mitv.tvhome \
+  com.mitv.cloudcontrol \
+  com.mitv.gallery \
+  com.sohu.inputmethod.sogou.tv \
+  com.xiaomi.mitv.appstore \
+  com.xiaomi.mitv.karaoke.service \
+  com.xiaomi.mitv.upgrade \
+  com.xiaomi.tv.gallery \
+  com.xm.webcontent \
+  com.duokan.videodaily \
+  com.xiaomi.mitv.calendar \
+  com.xiaomi.mitv.health \
+  com.xiaomi.mitv.hyper.screensaver \
+  com.mitv.screensaver \
+  com.xiaomi.mitv.shop \
+  com.xiaomi.tweather \
+  com.xiaomi.mitv.handbook \
+  com.xiaomi.mitv.aod.screensaver \
+  com.mitv.alarmcenter
+  do
+      adb shell pm disable-user --user 0 "$pkgs" >/dev/null 2>&1
+      sleep 0.2
+      tick
   done
 
-  echo "==============================================="
-  echo "🎉 TẢI APP HOÀN TẤT VUI LÒNG CHỌN CHẾ ĐỘ CÀI !"
-  echo "==============================================="
+  adb install -g 466.apk >/dev/null 2>&1; tick
+  adb shell pm grant com.spocky.projengmenu android.permission.WRITE_SECURE_SETTINGS >/dev/null 2>&1
+  adb shell monkey -p com.spocky.projengmenu -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; tick
+  adb shell am start -n com.spocky.projengmenu/.ui.home.MainActivity >/dev/null 2>&1; tick
+  adb shell cmd package set-home-activity com.spocky.projengmenu/.ui.home.MainActivity >/dev/null 2>&1; tick
 
+  for apk in \
+  mixp.apk \
+  voice.apk \
+  keyboard.apk \
+  ytb.apk \
+  mstore.apk \
+  quantv.apk \
+  ferrari.apk \
+  getout.apk \
+  1.apk \
+  phim4k.apk
+  do
+      adb install -g "$apk" >/dev/null 2>&1
+      sleep 0.2
+      tick
+  done
+
+  for img in 1.jpg 2.jpg 3.jpg 4.jpg 5.jpg 6.jpg 7.jpg 8.jpg
+  do
+      adb push "$img" /sdcard/DCIM >/dev/null 2>&1
+      sleep 0.2
+      tick
+  done
+
+  adb shell "
+  appops set com.spocky.projengmenu REQUEST_INSTALL_PACKAGES allow
+  appops set com.spocky.projengmenu WRITE_SETTINGS allow
+  appops set com.spocky.projengmenu MANAGE_EXTERNAL_STORAGE allow
+  appops set com.spocky.projengmenu READ_EXTERNAL_STORAGE allow
+  appops set com.spocky.projengmenu WRITE_EXTERNAL_STORAGE allow
+  appops set com.spocky.projengmenu READ_MEDIA_IMAGES allow
+  appops set com.spocky.projengmenu READ_MEDIA_VIDEO allow
+  appops set com.spocky.projengmenu READ_MEDIA_AUDIO allow
+  appops set com.mixplorer.silver REQUEST_INSTALL_PACKAGES allow
+  appops set com.mixplorer.silver WRITE_SETTINGS allow
+  appops set com.mixplorer.silver MANAGE_EXTERNAL_STORAGE allow
+  appops set com.mixplorer.silver READ_EXTERNAL_STORAGE allow
+  appops set com.mixplorer.silver WRITE_EXTERNAL_STORAGE allow
+  appops set com.mixplorer.silver READ_MEDIA_IMAGES allow
+  appops set com.mixplorer.silver READ_MEDIA_VIDEO allow
+  appops set com.mixplorer.silver READ_MEDIA_AUDIO allow
+  appops set com.oxootv.spagreen REQUEST_INSTALL_PACKAGES allow
+  appops set com.oxootv.spagreen WRITE_SETTINGS allow
+  appops set com.oxootv.spagreen MANAGE_EXTERNAL_STORAGE allow
+  " >/dev/null 2>&1
+  tick
+
+  adb push 466.plbackup /sdcard/Download >/dev/null 2>&1; tick
+  adb shell ime enable com.liskovsoft.leankeyboard/.ime.LeanbackImeService >/dev/null 2>&1; tick
+  adb shell settings put secure default_input_method com.liskovsoft.leankeyboard/.ime.LeanbackImeService >/dev/null 2>&1; tick
+
+  adb shell am start -n com.spocky.projengmenu/.ui.home.MainActivity >/dev/null 2>&1; tick
+  adb shell cmd package set-home-activity com.spocky.projengmenu/.ui.home.MainActivity >/dev/null 2>&1; tick
+
+  adb shell cmd appops write-settings >/dev/null 2>&1; tick
+  echo -e "${C_ORN} 🚀 Đang tối ưu hóa ứng dụng (Vui lòng chờ giây lát)...${RST}"
+  adb shell cmd package bg-dexopt-job >/dev/null 2>&1; tick
+  adb shell sync >/dev/null 2>&1
+  adb shell sync >/dev/null 2>&1
+  echo -e "${C_DIM} ⏳ Đồng bộ hệ thống...${RST}"
+  sleep 8
+
+  echo -e "${C_RED} 🔄 Đang khởi động lại thiết bị...${RST}"
+  timeout 3 adb reboot >/dev/null 2>&1; tick
+  adb disconnect >/dev/null 2>&1
+  sleep 2
+  adb kill-server >/dev/null 2>&1
+
+  # Hoàn thành lấp đầy thanh trạng thái tiến trình
+  STEP=$TOTAL_STEPS
+  print_ui
+
+  echo -e "\n${C_FILL}✅ CÀI ĐẶT HOÀN TẤT!${RST}"
+  echo -e "------------------------------------------------------"
   sleep 2
 }
 
