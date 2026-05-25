@@ -104,7 +104,6 @@ banner_menu2() {
   echo -e "${YELLOW}↩️  0. Quay lại MENU KẾT NỐI${NC}"
 
   echo -e "${CYAN}=======================================${NC}"
-}
   echo -e "${C_CYAN} Báo lỗi vui lòng liên hệ:${RST} ${C_ORN}0967.341.608${RST}"
   echo ""
 }
